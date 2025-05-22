@@ -1,26 +1,3 @@
-const newBtn = document.getElementById('newBtn');
-const form = document.querySelector('form');
-
-newBtn.addEventListener('click', () => {
-    form.style.display = 'block';
-});
-
-form.addEventListener('submit', (e) => {
-  e.preventDefault(); 
-
- 
-  const title = document.getElementById('title').value;
-  const author = document.getElementById('author').value;
-  const pages = document.getElementById('pages').value;
-  const read = document.getElementById('read').checked;
-
-  addBookToLibrary(title, author, pages, read);
-  displayBook();
-  form.reset(); 
-});
-
-
-
 const myLibrary = [];
 
 function Book(title, author, pages, read) {
@@ -31,46 +8,96 @@ function Book(title, author, pages, read) {
     this.read = read;
 }
 
-function addBookToLibrary(title, author, pages, read) {
-    const book1 = new Book(title, author, pages, read);
-    myLibrary.push(book1)
-    
+Book.prototype.toggleRead = function () {
+    this.read = this.read === "Read" ? "Not Read" : "Read";
+};
 
-  
+const newBtn = document.getElementById('newBtn');
+const form = document.getElementById('bookForm');
+
+newBtn.addEventListener('click', () => {
+  form.style.display = form.style.display === 'block' ? 'none' : 'block';
+});
+
+function addBookToLibrary(title, author, pages, read) {
+    const book = new Book(title, author, pages, read);
+    myLibrary.push(book);
+    displayBook(); 
 }
+
+function removeBook(id) {
+    const card = document.querySelector(`[data-id="${id}"]`);
+    if (card) {
+        card.classList.add('removing');
+        setTimeout(() => {
+            const index = myLibrary.findIndex(book => book.id === id);
+            if (index !== -1) {
+                myLibrary.splice(index, 1);
+                displayBook();
+            }
+        }, 300); 
+    }
+}
+
 
 function displayBook() {
   const container = document.querySelector('.Library-container');
-  container.innerHTML = ""; 
+  container.innerHTML = ''; 
 
-  for (let i = 0; i < myLibrary.length; i++) {
-    const book = myLibrary[i];
-
+  myLibrary.forEach(book => {
     const card = document.createElement('div');
     card.classList.add('books');
+    card.setAttribute('data-id', book.id);
 
     const titleEl = document.createElement('h2');
     const authorEl = document.createElement('p');
     const pagesEl = document.createElement('p');
     const readEl = document.createElement('p');
+    const removeBtn = document.createElement('button');
+    const toggleBtn = document.createElement('button');
 
-    titleEl.textContent = `Title: ${book.title}`;
-    authorEl.textContent = `Author: ${book.author}`;
+    titleEl.textContent = book.title;
+    authorEl.textContent = `By: ${book.author}`;
     pagesEl.textContent = `Pages: ${book.pages}`;
-    readEl.textContent = `Read: ${book.read ? 'Yes' : 'No'}`;
+    readEl.textContent = `Status: ${book.read}`;
+    readEl.classList.add('read-status', book.read === "Read" ? "read" : "not-read");
 
+    
+    removeBtn.textContent = 'Remove';
+    removeBtn.addEventListener('click', () => {
+      card.classList.add('removing');
+      setTimeout(() => {
+        const index = myLibrary.findIndex(b => b.id === book.id);
+        if (index !== -1) {
+          myLibrary.splice(index, 1);
+          displayBook();
+        }
+      }, 300);
+    });
+
+    
+    toggleBtn.textContent = 'Toggle Read';
+    toggleBtn.addEventListener('click', () => {
+      book.toggleRead();
+      readEl.textContent = `Status: ${book.read}`;
+      readEl.classList.toggle('read');
+      readEl.classList.toggle('not-read');
+      readEl.classList.add('pulse');
+      setTimeout(() => readEl.classList.remove('pulse'), 500);
+    });
+
+    
     card.appendChild(titleEl);
     card.appendChild(authorEl);
     card.appendChild(pagesEl);
     card.appendChild(readEl);
+    card.appendChild(toggleBtn);
+    card.appendChild(removeBtn);
 
     container.appendChild(card);
-        
-    }
+  });
 }
 
 
-addBookToLibrary("The Hobbit", "J.R.R. Tolkien", 310, "Read")
-addBookToLibrary("Harry Potter", "J.K Rowling", 2310, "Read")
-displayBook()
-
+addBookToLibrary("The Hobbit", "J.R.R. Tolkien", 310, "Read");
+addBookToLibrary("Harry Potter", "J.K. Rowling", 500, "Not Read");
